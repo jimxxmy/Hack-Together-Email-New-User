@@ -2,6 +2,6 @@
 {
     public interface IMailer
     {
-        Task SendMail(string Email);
+        Task SendMailToUser(string ClientName, string ClientEmail);
     }
 }
