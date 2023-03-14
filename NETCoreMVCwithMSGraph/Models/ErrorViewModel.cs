@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace NETCoreMVCwithMSGraph.Models
 {
     public class ErrorViewModel
@@ -5,5 +7,15 @@ namespace NETCoreMVCwithMSGraph.Models
         public string? RequestId { get; set; }
 
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    }
+    public class SubScribeModel
+    {
+        [Required]
+        public string FirstName { get; set; }
+        public string lastName { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+        
+        public string NickName { get; set; }
     }
 }
