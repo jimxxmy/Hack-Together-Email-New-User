@@ -1,5 +1,6 @@
 ﻿using Azure.Identity;
 using Microsoft.Graph;
+using NETCoreMVCwithMSGraph.Models;
 
 namespace HackTogether.WebApp.Services
 {
@@ -11,22 +12,22 @@ namespace HackTogether.WebApp.Services
             _configuration = configuration;
         }
 
-        public async Task<GraphServiceClient> Authorize()
+        public GraphServiceClient Authorize()
         {
             var scopes = new[] { "User.Read" };
 
             // Multi-tenant apps can use "common",
             // single-tenant apps must use the tenant ID from the Azure portal
-            var tenantId = _configuration.GetSection("AzureAd").GetConnectionString("TenantId");
+            var tenantId = _configuration.GetSection("AzureAd")["TenantId"];
 
             // Values from app registration
-            var clientId = _configuration.GetSection("AzureAd").GetConnectionString("ClientId");
-            var clientSecret = _configuration.GetSection("AzureAd").GetConnectionString("ClientSecret");
+            var clientId = _configuration.GetSection("AzureAd")["ClientId"];
+            var clientSecret = _configuration.GetSection("AzureAd")["ClientSecret"];
 
             // For authorization code flow, the user signs into the Microsoft
             // identity platform, and the browser is redirected back to your app
             // with an authorization code in the query parameters
-            var authorizationCode = _configuration.GetSection("AzureAd").GetConnectionString("CallbackPath");
+            var authorizationCode = _configuration.GetSection("AzureAd")["CallbackPath"];
 
             // using Azure.Identity;
             var options = new TokenCredentialOptions
@@ -42,23 +43,64 @@ namespace HackTogether.WebApp.Services
             return graphClient;
         }
 
-        //public async Task<HttpResponseMessage> CreateUserAsync()
-        //{
-        //    var graphClient = Authorize();
+        public async Task<HttpResponseMessage> CreateUserAsync(SubScribeModel data)
+        {
+            //var graphClient = Authorize();
+            var scopes = new[] { "Directory.ReadWrite.All" };
 
-        //    var requestBody = new User
-        //    {
-        //        AccountEnabled = true,
-        //        DisplayName = "Adele Vance",
-        //        MailNickname = "AdeleV",
-        //        UserPrincipalName = "AdeleV@contoso.onmicrosoft.com",
-        //        PasswordProfile = new PasswordProfile
-        //        {
-        //            ForceChangePasswordNextSignIn = true,
-        //            Password = "xWwvJ]6NMw+bWH-d",
-        //        },
-        //    };
-        //    var result = await graphClient.User
-        //}
+            // Multi-tenant apps can use "common",
+            // single-tenant apps must use the tenant ID from the Azure portal
+            var tenantId = _configuration.GetSection("AzureAd")["TenantId"];
+
+            // Values from app registration
+            var clientId = _configuration.GetSection("AzureAd")["ClientId"];
+            var clientSecret = _configuration.GetSection("AzureAd")["ClientSecret"];
+
+            // For authorization code flow, the user signs into the Microsoft
+            // identity platform, and the browser is redirected back to your app
+            // with an authorization code in the query parameters
+            var authorizationCode = _configuration.GetSection("AzureAd")["CallbackPath"];
+
+            // using Azure.Identity;
+            var options = new TokenCredentialOptions
+            {
+                AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
+            };
+
+            // https://learn.microsoft.com/dotnet/api/azure.identity.authorizationcodecredential
+            var authCodeCredential = new AuthorizationCodeCredential(
+                tenantId, clientId, clientSecret, authorizationCode, options);
+
+            var graphClient = new GraphServiceClient(authCodeCredential, scopes);
+            
+
+            var requestBody = new User
+            {
+                AccountEnabled = true,
+                DisplayName = data.FirstName,
+                MailNickname = data.NickName,
+                UserPrincipalName = $"{data.Email}@contoso.onmicrosoft.com",
+                PasswordProfile = new PasswordProfile
+                {
+                    ForceChangePasswordNextSignIn = true,
+                    Password = data.Password,
+                },
+            };
+            try
+            {
+                var result = await graphClient.Users.Request().AddAsync(requestBody);
+            }catch(Exception ex)
+            {
+
+            }
+            
+            //return result;
+            return null;
+        }
+
+        public Task<HttpResponseMessage> CreateUserAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
