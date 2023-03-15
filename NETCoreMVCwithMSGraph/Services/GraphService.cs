@@ -7,45 +7,15 @@ namespace HackTogether.WebApp.Services
     public class GraphService : IGraphService
     {
         private readonly IConfiguration _configuration;
-        public GraphService(IConfiguration configuration)
+        private readonly IMailer _mailer;
+        public GraphService(IConfiguration configuration, IMailer mailer)
         {
             _configuration = configuration;
-        }
-
-        public GraphServiceClient Authorize()
-        {
-            var scopes = new[] { "User.Read" };
-
-            // Multi-tenant apps can use "common",
-            // single-tenant apps must use the tenant ID from the Azure portal
-            var tenantId = _configuration.GetSection("AzureAd")["TenantId"];
-
-            // Values from app registration
-            var clientId = _configuration.GetSection("AzureAd")["ClientId"];
-            var clientSecret = _configuration.GetSection("AzureAd")["ClientSecret"];
-
-            // For authorization code flow, the user signs into the Microsoft
-            // identity platform, and the browser is redirected back to your app
-            // with an authorization code in the query parameters
-            var authorizationCode = _configuration.GetSection("AzureAd")["CallbackPath"];
-
-            // using Azure.Identity;
-            var options = new TokenCredentialOptions
-            {
-                AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-            };
-
-            // https://learn.microsoft.com/dotnet/api/azure.identity.authorizationcodecredential
-            var authCodeCredential = new AuthorizationCodeCredential(
-                tenantId, clientId, clientSecret, authorizationCode, options);
-
-            var graphClient = new GraphServiceClient(authCodeCredential, scopes);
-            return graphClient;
+            _mailer = mailer;
         }
 
         public async Task<HttpResponseMessage> CreateUserAsync(SubScribeModel data)
         {
-            //var graphClient = Authorize();
             var scopes = new[] { "Directory.ReadWrite.All" };
 
             // Multi-tenant apps can use "common",
@@ -59,19 +29,27 @@ namespace HackTogether.WebApp.Services
             // For authorization code flow, the user signs into the Microsoft
             // identity platform, and the browser is redirected back to your app
             // with an authorization code in the query parameters
-            var authorizationCode = _configuration.GetSection("AzureAd")["CallbackPath"];
+            var authorizationCode = "";
 
             // using Azure.Identity;
-            var options = new TokenCredentialOptions
-            {
-                AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-            };
+            //var options = new TokenCredentialOptions
+            //{
+            //    AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
+            //};
 
             // https://learn.microsoft.com/dotnet/api/azure.identity.authorizationcodecredential
-            var authCodeCredential = new AuthorizationCodeCredential(
-                tenantId, clientId, clientSecret, authorizationCode, options);
+            //var authCodeCredential = new AuthorizationCodeCredential(
+            //    tenantId, clientId, clientSecret, authorizationCode, options);
 
-            var graphClient = new GraphServiceClient(authCodeCredential, scopes);
+            var interactiveBrowserCredentialOptions = new InteractiveBrowserCredentialOptions
+            {
+                ClientId = clientId,
+                TenantId = tenantId,
+                RedirectUri = new Uri("http://localhost"),
+                AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
+            };
+            var tokenCredential = new InteractiveBrowserCredential(interactiveBrowserCredentialOptions);
+            var graphClient = new GraphServiceClient(tokenCredential, scopes);
             
 
             var requestBody = new User
@@ -79,16 +57,18 @@ namespace HackTogether.WebApp.Services
                 AccountEnabled = true,
                 DisplayName = data.FirstName,
                 MailNickname = data.NickName,
-                UserPrincipalName = $"{data.Email}@contoso.onmicrosoft.com",
+                UserPrincipalName = $"{data.FirstName}@w5w0b.onmicrosoft.com",
                 PasswordProfile = new PasswordProfile
                 {
                     ForceChangePasswordNextSignIn = true,
                     Password = data.Password,
-                },
+                }
             };
             try
             {
                 var result = await graphClient.Users.Request().AddAsync(requestBody);
+                await _mailer.SendMailToUser(requestBody.UserPrincipalName, requestBody.DisplayName);
+
             }catch(Exception ex)
             {
 

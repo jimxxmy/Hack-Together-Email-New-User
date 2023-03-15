@@ -28,28 +28,7 @@ namespace NETCoreMVCwithMSGraph.Controllers
         public IActionResult Index(SubScribeModel cust)
         {
             
-            
-            //var graphClient = obj.Authorize();
-            string customerId = cust.FirstName;
-            string customerName = cust.lastName;
-            string customerAddress = cust.Email;
-            string customerPassword = cust.Password;
-            string customerNickName = cust.NickName;
-
             _graphService.CreateUserAsync(cust);
-        //    var body = new User
-        //    {
-        //        AccountEnabled = true,
-        //        DisplayName = customerId,
-        //        MailNickname = customerNickName,
-        //        UserPrincipalName = $"{customerName}@w5w0b.onmicrosoft.com",
-        //        PasswordProfile = new PasswordProfile
-        //        {
-        //            ForceChangePasswordNextSignIn = true,
-        //            Password = customerPassword,
-        //        },
-        //};
-        //    var result = await graphClient.;
             return View();
         }
         public IActionResult Privacy()
