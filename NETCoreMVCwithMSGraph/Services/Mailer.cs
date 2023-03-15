@@ -20,8 +20,8 @@ namespace HackTogether.WebApp.Services
             var msg = new SendGridMessage()
             {
                 From = new EmailAddress(MyEmail, MyName),
-                Subject = "Sending with Twilio SendGrid is Fun",
-                PlainTextContent = "and easy to do anywhere, especially with C#"
+                Subject = "Welcome!!!",
+                PlainTextContent = "You are successfully added to Azure AD"
             };
             msg.AddTo(new EmailAddress(ClientEmail, ClientName));
             var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
