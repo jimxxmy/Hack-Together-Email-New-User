@@ -12,13 +12,13 @@ var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ??
 
 
 // Add services to the container.
+builder.Services.AddTransient<IMailer, Mailer>();
 builder.Services.AddTransient<IGraphService, GraphService>();
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
         .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
             .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
             .AddInMemoryTokenCaches();
-
 builder.Services.AddAuthorization(options =>
 
 {
